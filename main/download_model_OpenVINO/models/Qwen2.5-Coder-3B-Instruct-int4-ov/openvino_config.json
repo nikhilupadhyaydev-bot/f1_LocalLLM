@@ -1,0 +1,28 @@
+{
+  "dtype": "int4",
+  "input_info": null,
+  "optimum_version": "1.27.0",
+  "quantization_config": {
+    "all_layers": null,
+    "backup_precision": null,
+    "bits": 4,
+    "dataset": "wikitext2",
+    "dtype": "int4",
+    "gptq": null,
+    "group_size": 64,
+    "ignored_scope": null,
+    "lora_correction": null,
+    "num_samples": null,
+    "processor": null,
+    "quant_method": "default",
+    "ratio": 1.0,
+    "scale_estimation": true,
+    "sensitivity_metric": null,
+    "statistics_path": null,
+    "sym": false,
+    "tokenizer": null,
+    "trust_remote_code": false
+  },
+  "save_onnx_model": false,
+  "transformers_version": "4.51.3"
+}
