@@ -1,7 +1,18 @@
+# TO refactor the entire codebase.
+# exception handling to be done for the bellow codebase ideas for future.
+# use subprocess to identify whether openvino is installed in the system or not - if not installed then install it via the command
+# user to pick up the model
+# user to pick between cpu,gpu,npu
+# user gives the prompt - the model should remember the chat history for the session only for now.
+# the model should use dynamic tokens for response as much as it sees fit.
+# do something to make sure that the model updates accoringly by the internet.
+# fetches whatever it doeesnt know from the internet - always internet since always is connected that should be the priority - fallback patch the offline works as much as it knows to provide without the internet
+
 import time
 import openvino
 import openvino_genai as ov_genai
 from openvino import Core
+core = Core()
 
 
 # ============================================================
@@ -30,7 +41,7 @@ Give the explanation in approximately 300 words.
 """
 
 
-core = Core()
+
 
 
 # ============================================================
@@ -47,13 +58,16 @@ def banner():
 def devices():
     print("OpenVINO version:", openvino.__version__)
     print("Available devices:", core.available_devices)
+    if(openvino==False):
+        print("Please install openvino application! (cmd link to install the stuff to be needed to run the program)")
+        return
 
 
 # ============================================================
 # MODEL BENCHMARK
 # ============================================================
 
-def benchmark(model, device="CPU"):
+def benchmark(model, device="NPU"):
 
     model_name = model["name"]
     model_path = model["path"]
@@ -112,12 +126,12 @@ def benchmark(model, device="CPU"):
 
 def main():
 
-    banner()
+    # banner()
     devices()
 
     benchmark(
         MODELS["qwen3-8b"],
-        "CPU"
+        "NPU"
     )
 
 
