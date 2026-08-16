@@ -3,6 +3,7 @@ using namespace std;
 int check(string userpassinput,int count){
     string password = "Admin";
     // I will add the .touppercase later.
+    // to be added cesar cipher for cryptography!
     while(count>0){
         if(userpassinput == password){
             cout << "Access Granted\n";
@@ -28,7 +29,9 @@ int main(){
     }
     else{
         cout << "Access Blocked\nTry again after 3 Hours" << endl;
+        // use system - subprocess for this locking.
     }
+    return;
 }
 
 
