@@ -1,9 +1,18 @@
 import sys
 import time
-import openvino
-import openvino_genai as ov_genai
-from openvino import Core
-core = Core()
+try:
+    import openvino
+    import openvino_genai as ov_genai
+    from openvino import Core
+
+    core = Core()
+
+except ImportError:
+    print("OpenVINO isn't installed!")
+    print("Run:")
+    print("pip install openvino openvino-genai")
+    sys.exit(1)
+
 
 # -- Import ends and codebase starts! --
 # -- Tried and worked for 2 whole hrs for refactoring this.. --
@@ -19,7 +28,8 @@ def devices():
     print("OpenVINO version:", openvino.__version__)
     print("Available devices:", core.available_devices)
     if(openvino==False):
-        print("Please install openvino application! (cmd link to install the stuff to be needed to run the program)")
+        print("Please install openvino application!")
+        print("Please install OpenVINO using CMD :\npip install openvino")
         return
 
 # -- NOTE that this "localmodels" function must be updated - if suppose you add 16Billion parameter model
