@@ -207,6 +207,7 @@ def main():
     footer()
     return
 
+# NOTE - RESPONSE IS GIVEN TOKEN BY TOKEN!! - just like other llm's
 
 if __name__ == "__main__":
     main()
