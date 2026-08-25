@@ -2,6 +2,7 @@
 using namespace std;
 
 int check(string userpassinput, int count) {
+    // Better we can take password from a text file or a database instead of hardcoding like using fp = fopen("r",filename.txt); or database read
     string password = "Admin";
     // I will add the .touppercase later.
     // to be added cesar cipher for cryptography!

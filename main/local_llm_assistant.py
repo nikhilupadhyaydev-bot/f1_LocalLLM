@@ -42,7 +42,7 @@ except ImportError:
 def banner():
     print("=" * 40)
     print("|" + " " * 38 + "|")
-    print("|" + " " * 10 + "Welcome - Admin" + " " * 13 + "|")
+    print("|" + " " * 6 + "Welcome - Lemun Enterprises" + " " * 5 + "|")
     print("=" * 40)
     return
 
