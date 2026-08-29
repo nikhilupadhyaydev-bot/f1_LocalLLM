@@ -123,16 +123,49 @@ int checkPassword() {
     return 0;
 }
 
-void changePassword() {
-    cout << "Enter current password to confirm change: ";
-    string current;
-    cin >> current;
-    // NEEDS FIX - BREAKS AFTER INCORRECT INPUT FOR CURRENT PASSWORD!!
+// void changePassword() {
+//     cout << "Enter current password to confirm change: ";
+//     string current;
+//     cin >> current;
+//     // NEEDS FIX - BREAKS AFTER INCORRECT INPUT FOR CURRENT PASSWORD!!
 
+//     string storedPlain = decryptPass(readStoredCipher());
+//     if (current != storedPlain) {
+//         cout << "Incorrect current password. Cannot change.\n";
+//         return;
+//     }
+
+//     cout << "Enter new password: ";
+//     string newPass;
+//     cin >> newPass;
+
+//     if (writeStoredCipher(encryptPass(newPass))) {
+//         cout << "Password changed successfully.\n";
+//     } else {
+//         cout << "Error: could not write to " << KEY_FILE << "\n";
+//     }
+// }
+
+bool changePassword() {
     string storedPlain = decryptPass(readStoredCipher());
-    if (current != storedPlain) {
-        cout << "Incorrect current password. Cannot change.\n";
-        return;
+
+    int attempts = 3;
+    string current;
+
+    while (attempts > 0) {
+        cout << "Enter current password to confirm change: ";
+        cin >> current;
+
+        if (current == storedPlain) {
+            break; // verified, move on to setting new password
+        }
+
+        attempts--;
+        if (attempts == 0) {
+            cout << "Too many incorrect attempts. Cancelling password change.\n";
+            return false;
+        }
+        cout << "Incorrect current password. " << attempts << " attempt(s) left.\n";
     }
 
     cout << "Enter new password: ";
@@ -141,8 +174,10 @@ void changePassword() {
 
     if (writeStoredCipher(encryptPass(newPass))) {
         cout << "Password changed successfully.\n";
+        return true;
     } else {
         cout << "Error: could not write to " << KEY_FILE << "\n";
+        return false;
     }
 }
 
@@ -158,16 +193,18 @@ int main() {
     cout << "Welcome - Authorized User\n";
 
     while (true) {
-        cout << "Change password before continuing? (y/n): ";
-        string choice;
-        cin >> choice;
-        if (choice == "y") {
-            changePassword();
-            break;
-        } else if (choice == "n") {
-            break;
+    cout << "Change password before continuing? (y/n): ";
+    string choice;
+    cin >> choice;
+    if (choice == "y") {
+        if (!changePassword()) {
+            cout << "Continuing without changing password.\n";
         }
+        break;
+    } else if (choice == "n") {
+        break;
     }
+}
 
     system("python local_llm_assistant.py");
     return 0;
