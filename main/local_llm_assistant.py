@@ -46,6 +46,14 @@ def banner():
     print("=" * 40)
     return
 
+# def changepass():
+#     while(True):
+#         int n = input("Do you wish to change password?")
+#         print("1. Yes\n2. No")
+#         if(n==0):
+#             break
+#         if(n==1):
+#             system(change_password.cpp)
 
 def devices():
     try:
