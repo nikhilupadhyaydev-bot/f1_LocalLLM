@@ -1,64 +1,174 @@
 #include <bits/stdc++.h>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
 
-int check(string userpassinput, int count) {
-    // Better we can take password from a text file or a database instead of hardcoding like using fp = fopen("r",filename.txt); or database read
-    string password = "Admin";
-    // I will add the .touppercase later.
-    // to be added cesar cipher for cryptography!
+const string KEY_FILE = "key.txt";
+const string LOCKOUT_FILE = "lockout.txt";
+const int MAX_ATTEMPTS = 3;
+const long LOCKOUT_SECONDS = 3 * 60 * 60; // 3 hours
+const int CIPHER_SHIFT = 5; // change this if you want a different shift key
+
+// --- caesar cipher was implemented - college taught me that - simplest ig (shift only alphabetic chars, leave others as-is) ---
+
+string caesarShift(const string& input, int shift) {
+    string result = input;
+    for (char& c : result) {
+        if (isupper(c)) {
+            c = 'A' + (((c - 'A') + shift) % 26 + 26) % 26;
+        } else if (islower(c)) {
+            c = 'a' + (((c - 'a') + shift) % 26 + 26) % 26;
+        }
+        // digits/symbols untouched - fine for name-sake obfuscation
+    }
+    return result;
+}
+
+string encryptPass(const string& plain) {
+    return caesarShift(plain, CIPHER_SHIFT);
+}
+
+string decryptPass(const string& cipher) {
+    return caesarShift(cipher, -CIPHER_SHIFT);
+}
+
+// --- storage helpers ---
+
+string readStoredCipher() {
+    ifstream in(KEY_FILE);
+    string cipher;
+    getline(in, cipher);
+    return cipher;
+}
+
+bool writeStoredCipher(const string& cipher) {
+    ofstream out(KEY_FILE, ios::trunc);
+    if (!out) return false;
+    out << cipher;
+    return true;
+}
+
+// --- lockout persistence ---
+
+long currentEpoch() {
+    return duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+}
+
+long checkLockout() {
+    ifstream in(LOCKOUT_FILE);
+    if (!in) return 0;
+
+    long lockedAt;
+    in >> lockedAt;
+    long elapsed = currentEpoch() - lockedAt;
+
+    if (elapsed >= LOCKOUT_SECONDS) {
+        remove(LOCKOUT_FILE.c_str());
+        return 0;
+    }
+    return LOCKOUT_SECONDS - elapsed;
+}
+
+void triggerLockout() {
+    ofstream out(LOCKOUT_FILE, ios::trunc);
+    out << currentEpoch();
+}
+
+// --- first run setup ---
+
+void ensureKeyFileExists() {
+    ifstream check(KEY_FILE);
+    if (check.good()) return; // already exists, nothing to do
+
+    cout << "No password file found - creating one now.\n";
+    cout << "Default password is: Admin\n";
+    cout << "(Change it after logging in.)\n\n";
+
+    writeStoredCipher(encryptPass("Admin"));
+}
+
+// --- core auth ---
+
+int checkPassword() {
+    long remaining = checkLockout();
+    if (remaining > 0) {
+        cout << "Access Blocked. Try again in " << (remaining / 60) << " minutes.\n";
+        return 0;
+    }
+
+    string storedCipher = readStoredCipher();
+    string storedPlain = decryptPass(storedCipher);
+
+    int count = MAX_ATTEMPTS;
+    string input;
 
     while (count > 0) {
-        if (userpassinput == password) {
+        cout << "Enter Password: ";
+        if (!(cin >> input)) {
+            cout << "Input error - couldn't read password.\n";
+            return 0;
+        }
+
+        if (input == storedPlain) {
             cout << "Access Granted\n";
             return 1;
         }
-        else if (userpassinput != password) {
-            count--;
-            cout << "Incorrect Password - Remaining Attempts :  " << count << endl;
 
-            if (count == 0) {
-                // don't ask for another input on the last failed attempt,
-                // there's nothing left to check against
-                break;
-            }
-
-            cout << "Enter Correct Password : Hint - Root Director" << endl;
-
-            // basic exception handling: cin can fail (e.g. bad stream state),
-            // so bail out cleanly instead of looping forever
-            if (!(cin >> userpassinput)) {
-                cout << "Input error - couldn't read password.\n";
-                return 0;
-            }
-        }
+        count--;
+        cout << "Incorrect Password - Remaining Attempts: " << count << endl;
     }
+
+    triggerLockout();
+    cout << "Access Blocked. Try again after 3 hours.\n";
     return 0;
 }
 
+void changePassword() {
+    cout << "Enter current password to confirm change: ";
+    string current;
+    cin >> current;
+    // NEEDS FIX - BREAKS AFTER INCORRECT INPUT FOR CURRENT PASSWORD!!
+
+    string storedPlain = decryptPass(readStoredCipher());
+    if (current != storedPlain) {
+        cout << "Incorrect current password. Cannot change.\n";
+        return;
+    }
+
+    cout << "Enter new password: ";
+    string newPass;
+    cin >> newPass;
+
+    if (writeStoredCipher(encryptPass(newPass))) {
+        cout << "Password changed successfully.\n";
+    } else {
+        cout << "Error: could not write to " << KEY_FILE << "\n";
+    }
+}
+
+// --- entry point ---
+
 int main() {
-    string userpassinput;
-    int count = 3;
+    ensureKeyFileExists();
 
-    cout << "Enter Password : ";
-
-    if (!(cin >> userpassinput)) {
-        cout << "Input error - couldn't read password.\n";
+    if (checkPassword() != 1) {
         return 1;
     }
 
-    if (check(userpassinput, count) == 1) {
-        cout << "Welcome - Authorized User\n";
-        system("python local_llm_assistant.py");
-    }
-    else {
-        cout << "Access Blocked\nTry again after 3 Hours" << endl;
-        // use system - subprocess for this locking.
+    cout << "Welcome - Authorized User\n";
+
+    while (true) {
+        cout << "Change password before continuing? (y/n): ";
+        string choice;
+        cin >> choice;
+        if (choice == "y") {
+            changePassword();
+            break;
+        } else if (choice == "n") {
+            break;
+        }
     }
 
+    system("python local_llm_assistant.py");
     return 0;
 }
-
-
-// Notes:
-// for this is build v1 hence ive just hardcoded everything - the next version v2 expected will have
-// Object oriented programming - classes etc, everything ive learned in cpp until stl - all will be here in v2
