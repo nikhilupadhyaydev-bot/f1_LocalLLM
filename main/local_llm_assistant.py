@@ -48,12 +48,12 @@ def banner():
 
 # def changepass():
 #     while(True):
-#         int n = input("Do you wish to change password?")
-#         print("1. Yes\n2. No")
-#         if(n==0):
+#         choice = input("Do you want to change current password? (y/n): ").strip().lower()
+#         if(choice=="y"):
+#             __path__("\change_password.cpp")
 #             break
-#         if(n==1):
-#             system(change_password.cpp)
+#         else:
+#             break
 
 def devices():
     try:
