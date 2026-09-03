@@ -198,7 +198,7 @@ int main() {
     cin >> choice;
     if (choice == "y") {
         if (!changePassword()) {
-            cout << "Continuing without changing password.\n";
+            cout << "\n...\nContinuing without changing password.\n";
         }
         break;
     } else if (choice == "n") {
@@ -207,5 +207,8 @@ int main() {
 }
 
     system("python local_llm_assistant.py");
+
+    // NOTE THAT AFTER STARTING THE PYTHON PROGRAM - THE CPP FILE SHOULD TRACK THE CPU,GPU,NPU,RAM in real time - of the .py file specifically.
+    // CHECK FOR UPDATES... FEATURE TO BE ADDED IN V2.
     return 0;
 }
