@@ -69,18 +69,22 @@ def devices():
 def localmodels():
     MODELS = {"qwen2.5-coder-3b":
               {"name": "Qwen2.5 Coder 3B",
+               "company":"Alibaba",
+               "country":"China",
                "path": "download_model_OpenVINO/models/Qwen2.5-Coder-3B-Instruct-int4-ov",
                "supports": "CPU,GPU"
                # yes all supports of models were tested beforehand on ASUS VIVOBOOK S14 S5406SA Intel Core Ultra 5 226v w/ 130V ARC IGPU + 40 TOPS NPU
                },
               "qwen3-8b":
               {"name": "Qwen3 8B",
+               "company":"Alibaba",
+               "country":"China",
                "path": "download_model_OpenVINO/models/Qwen3-8B-int4-cw-ov",
                "supports": "CPU,GPU,NPU"
                }
               # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
               }
-    # returning it now instead of just printing, so main() can actually use it
+    # returning it now instead of just printing so main() can actually use it
     return MODELS
 
 
@@ -92,7 +96,7 @@ def modelchoice(models):
     keys = list(models.keys())
     for i, key in enumerate(keys, start=1):
         info = models[key]
-        print(f"  {i}. {info['name']}   (supports: {info['supports']})")
+        print(f"  {i}. {info['name']} - {info['company']} - {info['country']} - (supports: {info['supports']})")
 
     model = None
     while model is None:
@@ -135,6 +139,9 @@ def load_pipeline(model, device):
     except Exception as e:
         print(f"\nFailed to load model: {e}")
         print("Check that the model path exists and the device string is valid.")
+        # WHEN creating .exe be CAREFUL - THE MODEL MOSTLY WONT BE BUNDLED WITH THE EXE since it would make it very big - so we need a way to download the model too - after installation
+        # FOR TESTING PURPOSES AND FOR DEMO - people who like to test softwares - I recommmend that you keep a simple model like basic model bundled in - so it comes with atleast 1 model preinstalled.
+        # ALSO THE USER SHOULD HAVE THE OPTION TO DYNAMICALLY UNINSTALL THE MODELS HE doesnt want - unnecessary space hogging.
         sys.exit(1)
 
     print(f"Model loaded in {time.perf_counter() - load_start:.2f} seconds")
@@ -231,3 +238,5 @@ if __name__ == "__main__":
 # do something to make sure that the model updates accoringly by the internet.
 # fetches whatever it doeesnt know from the internet - always internet since always is connected that should be the priority - fallback patch the offline works as much as it knows to provide without the internet - dont implement api's yet - for now local models are enough
 # ^ still not implemented on purpose per the note above - no APIs yet, local-only for this pass
+
+# == BETA READY ++
