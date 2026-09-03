@@ -81,7 +81,22 @@ def localmodels():
                "country":"China",
                "path": "download_model_OpenVINO/models/Qwen3-8B-int4-cw-ov",
                "supports": "CPU,GPU,NPU"
-               }
+               },
+               "Llama-3.2-1B-Instruct-int4-ov":
+               {"name": "Llama-3.2-1B-Instruct-int4-ov",
+                "company":"Meta",
+                "country":"United States",
+                "path":"download_model_OpenVINO/models/Llama-3.2-1B-Instruct-int4-ov",
+                "supports":"CPU,GPU"
+                },
+                # == DEFAULT MODEL BELOW ==
+                "Qwen2.5-1.5B-Instruct-int4-ov":
+                {"name":"Qwen2.5-1.5B-Instruct-int4-ov",
+                 "company":"Alibaba",
+                 "country":"China",
+                 "path":"download_model_OpenVINO/models/Qwen2.5-1.5B-Instruct-int4-ov",
+                 "supports":"CPU,GPU"
+                 }
               # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
               }
     # returning it now instead of just printing so main() can actually use it
