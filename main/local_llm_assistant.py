@@ -67,7 +67,18 @@ def devices():
 # -- NOTE that this "localmodels" function must be updated - if suppose you add 16Billion parameter model
 
 def localmodels():
-    MODELS = {"qwen2.5-coder-3b":
+    MODELS = {
+                # == DEFAULT MODEL BELOW ==
+                # == MUST BE DOWNLOADED DURING 1st INSTALLATION OF THE MODEL - HENCE INTERNET FOR THE FIRST TIME DURING APP DOWNLOAD IS MANDATORY
+                "Qwen2.5-1.5B-Instruct-int4-ov":
+                {"name":"Qwen2.5-1.5B-Instruct-int4-ov",
+                 "company":"Alibaba",
+                 "country":"China",
+                 "path":"download_model_OpenVINO/models/Qwen2.5-1.5B-Instruct-int4-ov",
+                 "supports":"CPU,GPU"
+                 }
+              # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
+              ,"qwen2.5-coder-3b":
               {"name": "Qwen2.5 Coder 3B",
                "company":"Alibaba",
                "country":"China",
@@ -88,16 +99,7 @@ def localmodels():
                 "country":"United States",
                 "path":"download_model_OpenVINO/models/Llama-3.2-1B-Instruct-int4-ov",
                 "supports":"CPU,GPU"
-                },
-                # == DEFAULT MODEL BELOW ==
-                "Qwen2.5-1.5B-Instruct-int4-ov":
-                {"name":"Qwen2.5-1.5B-Instruct-int4-ov",
-                 "company":"Alibaba",
-                 "country":"China",
-                 "path":"download_model_OpenVINO/models/Qwen2.5-1.5B-Instruct-int4-ov",
-                 "supports":"CPU,GPU"
-                 }
-              # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
+                }
               }
     # returning it now instead of just printing so main() can actually use it
     return MODELS
@@ -253,5 +255,12 @@ if __name__ == "__main__":
 # do something to make sure that the model updates accoringly by the internet.
 # fetches whatever it doeesnt know from the internet - always internet since always is connected that should be the priority - fallback patch the offline works as much as it knows to provide without the internet - dont implement api's yet - for now local models are enough
 # ^ still not implemented on purpose per the note above - no APIs yet, local-only for this pass
+
+
+# == FINAL TOUCH BEFORE BETA ==
+# to add auto update and a default model to talk to.
+# 1st time application install - the model is actually not added to the .exe so wifi during the locallm install is recommended
+# with the wifi in place first this app will get instaalled say - user selected D drive - then with the intenet the model gets installed - default model only.
+# remainng modle if needed can be download by user by goinng to model name and clicking on add model -
 
 # == BETA READY ++

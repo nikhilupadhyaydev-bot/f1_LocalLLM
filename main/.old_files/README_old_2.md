@@ -22,22 +22,9 @@ This project is dedicated to the LocalLLM implementation — a local LLM that ru
 - Docker — seamless access across multiple platforms
 
 **Languages**
-- C++ — tray icon and auth shell
-- Python — GUI, model handling, and inference
-- SQL (SQLite) — local memory and database storage, referenced when needed
-
-**Frameworks & Libraries**
-- Qt6 Widgets — native system tray and password-window UI for the C++ shell
-- PySide6 — Python GUI for the app's main mode windows, same Qt foundation as the C++ shell
-- OpenVINO GenAI — AI inference engine, shared across both the C++ and Python halves; targets the local NPU/iGPU
-- Piper — local text-to-speech (Phase 2)
-
-**C++ ↔ Python Communication**
-- Local TCP socket (`127.0.0.1`) — lightweight, cross-platform bridge between the auth shell and the Python app
-
-**Build & Packaging**
-- CMake — C++ build system
-- Nuitka (primary) / PyInstaller (fallback) — bundling the Python half for end users without a Python install
+- C++ — password gate, real-time displays
+- Python — importing and working with models
+- SQL — memories and local database storage, referenced when needed
 
 **AI**
 
