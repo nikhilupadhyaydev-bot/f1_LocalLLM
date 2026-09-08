@@ -77,29 +77,29 @@ def localmodels():
                  "path":"download_model_OpenVINO/models/Qwen2.5-1.5B-Instruct-int4-ov",
                  "supports":"CPU,GPU"
                  }
-              # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
-              ,"qwen2.5-coder-3b":
-              {"name": "Qwen2.5 Coder 3B",
-               "company":"Alibaba",
-               "country":"China",
-               "path": "download_model_OpenVINO/models/Qwen2.5-Coder-3B-Instruct-int4-ov",
-               "supports": "CPU,GPU"
-               # yes all supports of models were tested beforehand on ASUS VIVOBOOK S14 S5406SA Intel Core Ultra 5 226v w/ 130V ARC IGPU + 40 TOPS NPU
-               },
-              "qwen3-8b":
-              {"name": "Qwen3 8B",
-               "company":"Alibaba",
-               "country":"China",
-               "path": "download_model_OpenVINO/models/Qwen3-8B-int4-cw-ov",
-               "supports": "CPU,GPU,NPU"
-               },
-               "Llama-3.2-1B-Instruct-int4-ov":
-               {"name": "Llama-3.2-1B-Instruct-int4-ov",
-                "company":"Meta",
-                "country":"United States",
-                "path":"download_model_OpenVINO/models/Llama-3.2-1B-Instruct-int4-ov",
-                "supports":"CPU,GPU"
-                }
+            #   # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
+            #   ,"qwen2.5-coder-3b":
+            #   {"name": "Qwen2.5 Coder 3B",
+            #    "company":"Alibaba",
+            #    "country":"China",
+            #    "path": "download_model_OpenVINO/models/Qwen2.5-Coder-3B-Instruct-int4-ov",
+            #    "supports": "CPU,GPU"
+            #    # yes all supports of models were tested beforehand on ASUS VIVOBOOK S14 S5406SA Intel Core Ultra 5 226v w/ 130V ARC IGPU + 40 TOPS NPU
+            #    },
+            #   "qwen3-8b":
+            #   {"name": "Qwen3 8B",
+            #    "company":"Alibaba",
+            #    "country":"China",
+            #    "path": "download_model_OpenVINO/models/Qwen3-8B-int4-cw-ov",
+            #    "supports": "CPU,GPU,NPU"
+            #    },
+            #    "Llama-3.2-1B-Instruct-int4-ov":
+            #    {"name": "Llama-3.2-1B-Instruct-int4-ov",
+            #     "company":"Meta",
+            #     "country":"United States",
+            #     "path":"download_model_OpenVINO/models/Llama-3.2-1B-Instruct-int4-ov",
+            #     "supports":"CPU,GPU"
+            #     }
               }
     # returning it now instead of just printing so main() can actually use it
     return MODELS
@@ -263,4 +263,5 @@ if __name__ == "__main__":
 # with the wifi in place first this app will get instaalled say - user selected D drive - then with the intenet the model gets installed - default model only.
 # remainng modle if needed can be download by user by goinng to model name and clicking on add model -
 
-# == BETA READY ++
+# == ALPHA CODE READY ++
+# == MOVING TO BETA - THAT IS BUILD V1 ++

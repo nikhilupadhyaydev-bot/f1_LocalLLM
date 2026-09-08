@@ -1,0 +1,39 @@
+Plan and Tech stack  == 
+
+My honest take: **this is the right call, not a compromise you should feel sheepish about.** Going full C++ as a second-year who just started STL, purely to look impressive, is how projects die in "week 3, still fighting Qt's signal/slot syntax, zero features built." A working hybrid app beats an abandoned "goated" one every single time a recruiter actually opens your GitHub. You're not avoiding the hard stuff — you're sequencing it sensibly, and the C++ shell still gives you the "I wrote a systems-level component" credibility you wanted. I'd make the same call in your position.
+
+Now — the tech stack, laptop-specific, ranked where there's a real decision to make.
+
+**1. C++ tray + auth shell**
+- **Qt6 Widgets (C++)** — 1st choice. Native system tray support (`QSystemTrayIcon`), mature password-window widgets, and — crucially — the *same* Qt you'll use in Python later, so concepts transfer directly. Cons: LGPL licensing means dynamic linking (fine for you, just know it exists).
+- Alternative: raw **Win32 API + a minimal custom window** — lowest possible RAM, but you'd hand-roll everything including cross-platform support later. Not worth it — you explicitly want Linux/cross-platform down the line, and Qt already handles that.
+- Ranking: Qt6 Widgets, no real contest for your goals.
+
+**2. Python GUI (the mode windows)**
+- **PySide6** — 1st choice. Official Qt bindings, LGPL (free for your use case), and matches your C++ shell's framework so your mental model doesn't fork in two directions.
+- Alternative: **PyQt6** — nearly identical API, but GPL/commercial-license — avoid unless you want to open-source everything under GPL too.
+- Ranking: PySide6, clearly.
+
+**3. C++ ↔ Python communication (the one deliberate "seam" we talked about)**
+- **Local TCP socket on `127.0.0.1`** — 1st choice. Simple, well-documented in both languages, works identically cross-platform (Windows/Linux), and is trivial to secure since it never leaves your machine.
+- Alternative: **Named pipes** — slightly faster, but the API differs meaningfully between Windows and Linux, which fights your cross-platform goal.
+- Alternative: **gRPC** — more "proper" and scalable, but it's real overhead (extra dependency, code-gen step) for what's essentially "hey, password's good, here's a session token." Overkill at your stage.
+- Ranking: plain local socket. You can always upgrade to gRPC later if the app grows real complexity — don't pay that cost now.
+
+**4. AI inference engine**
+- **OpenVINO GenAI (C++ AND Python APIs)** — 1st choice, and this is the one piece shared by both halves of your app, which is convenient. Official Intel support for your exact NPU/iGPU, actively updated (2026.0 just added a lot of what you need).
+- No real 2nd choice here for *your specific hardware* — llama.cpp with Vulkan backend is a legitimate alternative on other machines, but it doesn't get you NPU access at all, only iGPU/CPU, so it's strictly worse for you.
+
+**5. Storage**
+- **SQLite** — no real competition at your scale. Single-file, zero setup, built into both Python (`sqlite3`, stdlib) and C++ (link against `libsqlite3`, or use a lightweight wrapper like SQLiteCpp). Perfect for the portable, pen-drive-friendly install you want.
+
+**6. TTS (Phase 2, but worth deciding now since it affects your model folder structure)**
+- **Piper** — 1st choice. Open-source, runs comfortably on CPU alone (frees your iGPU for the actual LLM), tiny model sizes (~50-100MB per voice), genuinely good quality for a local model. This is a strong fit given your eyesight reasoning — it's fast enough to feel responsive rather than a laggy afterthought.
+- Alternative: **Coqui TTS** — better voice quality/cloning options, but heavier and slower — worse fit for "reasonable RAM, fast" requirement you set for non-imagegen tasks.
+- Ranking: Piper for your use case, Coqui only if voice quality becomes a real complaint later.
+
+**7. Build/packaging tooling**
+- **CMake** for the C++ side (standard, cross-platform, what you'll see in every real C++ project).
+- **PyInstaller or Nuitka** to bundle the Python half into something that doesn't require the end-user to have Python installed. Nuitka actually compiles Python to C, giving you smaller/faster output — worth trying first given your performance priorities, with PyInstaller as the reliable fallback if Nuitka gives you packaging headaches.
+
+That's your full stack. Next natural step is either (a) I walk you through setting up the C++ side first (Qt6 install + a bare tray icon that does nothing yet), or (b) you validate the Python + OpenVINO chat loop first like we discussed in Phase 1, and the C++ shell comes after. Which do you want to tackle first?
