@@ -55,7 +55,7 @@ if len(sys.argv) > 1:
 else:
     INSTALL_ROOT = Path(__file__).resolve().parent
 
-MODELS_DIR = INSTALL_ROOT / "download_model_OpenVINO" / "models"  # Claude - comment: FIXED - was INSTALL_ROOT/"models", one level too shallow. This now matches your own FOR THIS FOLDER SPECIFICALLY.txt, which specifies models live nested under download_model_OpenVINO/models/, not directly under the install root.
+MODELS_DIR = INSTALL_ROOT / "models"  # Claude - comment: every model now lives under here, no more bare relative path strings
 
 
 def banner():
@@ -86,12 +86,11 @@ def devices():
 # -- NOTE that this "localmodels" function must be updated - if suppose you add 16Billion parameter model
 
 def localmodels():
-    # Claude - comment: paths are now built from MODELS_DIR (install-root-anchored,
-    # nested under download_model_OpenVINO/models/ per your own folder convention)
+    # Claude - comment: paths are now built from MODELS_DIR (install-root-anchored)
     # instead of a hardcoded relative string, and each entry carries its real
     # Hugging Face repo id under "hf_repo" so ensure_base_model() below knows
-    # exactly what to fetch — matches your own verified-working download script
-    # at download_model_OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov.py exactly.
+    # exactly what to fetch — verified against OpenVINO's own model card,
+    # not guessed: https://huggingface.co/OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov
     MODELS = {
                 # == DEFAULT MODEL BELOW ==
                 # == MUST BE DOWNLOADED DURING 1st INSTALLATION OF THE MODEL - HENCE INTERNET FOR THE FIRST TIME DURING APP DOWNLOAD IS MANDATORY
@@ -100,7 +99,7 @@ def localmodels():
                  "company":"Alibaba",
                  "country":"China",
                  "path": str(MODELS_DIR / "Qwen2.5-1.5B-Instruct-int4-ov"),  # Claude - comment: was a bare relative string, now install-root-anchored
-                 "hf_repo": "llmware/qwen2.5-1.5b-instruct-ov",              # Claude - comment: FIXED - was a different repo I'd found while researching (OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov), which doesn't match what your own download_model_OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov.py actually uses. This now matches your verified-working script exactly, so the automatic first-run download and your manual per-model scripts always agree.
+                 "hf_repo": "OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov",        # Claude - comment: new field, used only by ensure_base_model()
                  "supports":"CPU,GPU"
                  }
             #   # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
@@ -257,16 +256,9 @@ def load_pipeline(model, device):
     return pipe
 
 
-def getresponse(pipe, chat_history, prompt):
+def getresponse(pipe, prompt):
     # reveives input of user from userprompts function()
     # this gets response from the localllm
-
-    # Claude - comment: start_chat()/finish_chat() is deprecated in current
-    # OpenVINO GenAI - the pipeline no longer holds conversation memory
-    # internally. We now hold it ourselves in chat_history and pass the
-    # whole thing into generate() every turn, per Intel's current chat-scenario
-    # docs (openvinotoolkit.github.io/openvino.genai/docs/guides/chat-scenario).
-    chat_history.append({"role": "user", "content": prompt})
 
     # dynamic tokens: we don't force a fixed length, the model stops itself on EOS.
     # max_new_tokens here is just a safety ceiling so one bad turn can't run forever.
@@ -281,13 +273,7 @@ def getresponse(pipe, chat_history, prompt):
         return False  # False = keep generating, True would stop early
 
     try:
-        result = pipe.generate(chat_history, gen_config, streamer)
-        # Claude - comment: generate() still streams token-by-token via the
-        # callback above exactly as before - streamer works the same way
-        # regardless of whether the input is a plain string or a ChatHistory.
-        # The difference is we now also get the final text back afterward,
-        # which we need to append as the assistant's turn.
-        chat_history.append({"role": "assistant", "content": result.texts[0]})
+        pipe.generate(prompt, gen_config, streamer)
     except Exception as e:
         print(f"\n[Generation error: {e}]")
     finally:
@@ -301,25 +287,26 @@ def userprompts(pipe):
 
     print("\nChat session started. Type 'exit' or 'quit' to end.\n")
 
-    # Claude - comment: start_chat() is deprecated - we now own the
-    # conversation ourselves via ChatHistory and pass it into every
-    # generate() call instead. No matching finish_chat() call needed below
-    # since there's no pipeline-side chat state left to close out.
-    chat_history = ov_genai.ChatHistory()
+    # start_chat() makes the pipeline remember turns for this session only,
+    # which covers the "remember chat history for the session" requirement
+    pipe.start_chat()
 
-    while True:
-        try:
-            prompt = input("You: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nInterrupted.")
-            break
+    try:
+        while True:
+            try:
+                prompt = input("You: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nInterrupted.")
+                break
 
-        if prompt.lower() in ("exit", "quit"):
-            break
-        if not prompt:
-            continue
+            if prompt.lower() in ("exit", "quit"):
+                break
+            if not prompt:
+                continue
 
-        getresponse(pipe, chat_history, prompt)
+            getresponse(pipe, prompt)
+    finally:
+        pipe.finish_chat()
 
 
 def footer():
@@ -362,7 +349,7 @@ if __name__ == "__main__":
 # use subprocess to identify whether openvino is installed in the system or not - if not installed then install it via the command -- DONE
 # user to pick up the model -- DONE
 # user to pick between cpu,gpu,npu -- DONE
-# user gives the prompt - the model should remember the chat history for the session only for now. -- DONE, now via a ChatHistory object passed into generate() each turn (Claude - comment: start_chat()/finish_chat() were deprecated by OpenVINO and have been removed, see getresponse()/userprompts())
+# user gives the prompt - the model should remember the chat history for the session only for now. -- DONE via pipe.start_chat()/finish_chat()
 # the model should use dynamic tokens for response as much as it sees fit. -- DONE, model self-stops on EOS, max_new_tokens is just a safety ceiling
 # do something to make sure that the model updates accoringly by the internet.
 # fetches whatever it doeesnt know from the internet - always internet since always is connected that should be the priority - fallback patch the offline works as much as it knows to provide without the internet - dont implement api's yet - for now local models are enough

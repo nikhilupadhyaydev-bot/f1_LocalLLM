@@ -1,5 +1,5 @@
 # f1_LocalLLM
-<!-- SENTINEL -->
+<!-- Alias SENTINEL -->
 
 This project is dedicated to the LocalLLM implementation — a local LLM that runs like an actual AI, without needing an internet connection.
 

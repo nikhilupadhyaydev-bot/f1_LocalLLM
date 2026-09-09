@@ -1,8 +1,6 @@
 import sys
-import os
 import time
 import subprocess
-from pathlib import Path  # Claude - comment: needed for install-root-anchored paths, replacing bare relative strings
 
 try:
     import openvino
@@ -41,23 +39,6 @@ except ImportError:
 # -- Import ends and codebase starts! --
 # -- Tried and worked for 2 whole hrs for refactoring this.. --
 
-# ============================================================================
-# Claude - comment: INSTALL ROOT RESOLUTION
-# password_gate.cpp now launches this script with its own resolved exe
-# directory as argv[1] (see the C++ fix from earlier), so both halves of the
-# app agree on one "where do I live" answer instead of guessing separately.
-# Falls back to this script's own folder when run standalone during dev
-# (e.g. testing this file directly without going through the C++ gate),
-# so nothing breaks while you're iterating on this half alone.
-# ============================================================================
-if len(sys.argv) > 1:
-    INSTALL_ROOT = Path(sys.argv[1]).resolve()
-else:
-    INSTALL_ROOT = Path(__file__).resolve().parent
-
-MODELS_DIR = INSTALL_ROOT / "download_model_OpenVINO" / "models"  # Claude - comment: FIXED - was INSTALL_ROOT/"models", one level too shallow. This now matches your own FOR THIS FOLDER SPECIFICALLY.txt, which specifies models live nested under download_model_OpenVINO/models/, not directly under the install root.
-
-
 def banner():
     print("=" * 40)
     print("|" + " " * 38 + "|")
@@ -86,12 +67,6 @@ def devices():
 # -- NOTE that this "localmodels" function must be updated - if suppose you add 16Billion parameter model
 
 def localmodels():
-    # Claude - comment: paths are now built from MODELS_DIR (install-root-anchored,
-    # nested under download_model_OpenVINO/models/ per your own folder convention)
-    # instead of a hardcoded relative string, and each entry carries its real
-    # Hugging Face repo id under "hf_repo" so ensure_base_model() below knows
-    # exactly what to fetch — matches your own verified-working download script
-    # at download_model_OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov.py exactly.
     MODELS = {
                 # == DEFAULT MODEL BELOW ==
                 # == MUST BE DOWNLOADED DURING 1st INSTALLATION OF THE MODEL - HENCE INTERNET FOR THE FIRST TIME DURING APP DOWNLOAD IS MANDATORY
@@ -99,8 +74,7 @@ def localmodels():
                 {"name":"Qwen2.5-1.5B-Instruct-int4-ov",
                  "company":"Alibaba",
                  "country":"China",
-                 "path": str(MODELS_DIR / "Qwen2.5-1.5B-Instruct-int4-ov"),  # Claude - comment: was a bare relative string, now install-root-anchored
-                 "hf_repo": "llmware/qwen2.5-1.5b-instruct-ov",              # Claude - comment: FIXED - was a different repo I'd found while researching (OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov), which doesn't match what your own download_model_OpenVINO/Qwen2.5-1.5B-Instruct-int4-ov.py actually uses. This now matches your verified-working script exactly, so the automatic first-run download and your manual per-model scripts always agree.
+                 "path":"download_model_OpenVINO/models/Qwen2.5-1.5B-Instruct-int4-ov",
                  "supports":"CPU,GPU"
                  }
             #   # IF ADDED YOU ADD MODEL HERE MANUALLY!! yeah pls no shit do some hardwork man... - its your flagship project - im lazy will update in v2 with automation.
@@ -129,72 +103,6 @@ def localmodels():
               }
     # returning it now instead of just printing so main() can actually use it
     return MODELS
-
-
-# ============================================================================
-# Claude - comment: MANDATORY FIRST-RUN BASE MODEL DOWNLOAD
-# This is the piece that turns "download_model_OpenVINO/models/... must exist
-# somehow" (the old TODO comment at the bottom of this file) into something
-# that actually runs. It blocks here on purpose — no menu, no chat, until the
-# default model is verifiably present — because the beta requirement is that
-# first install cannot proceed without it.
-# ============================================================================
-
-def _model_is_present(model_path: Path) -> bool:
-    # Claude - comment: OpenVINO IR models are a folder of files, not one
-    # single file — checking for openvino_model.xml specifically (rather than
-    # just the folder existing) catches a partial/interrupted previous
-    # download instead of trusting an empty or half-written folder.
-    return (model_path / "openvino_model.xml").exists()
-
-
-def ensure_base_model(model_info):
-    model_path = Path(model_info["path"])
-
-    if _model_is_present(model_path):
-        return  # already downloaded, nothing to do
-
-    print(f"\nBase model '{model_info['name']}' not found - this is required before the app can run.")
-    print("Downloading now (this only happens once)...\n")
-
-    try:
-        import huggingface_hub
-    except ImportError:
-        # Claude - comment: same auto-install pattern already used for OpenVINO
-        # above, kept consistent rather than introducing a different style
-        print("The 'huggingface_hub' package is required to download the base model.")
-        choice = input("Install it now automatically via pip? (y/n): ").strip().lower()
-        if choice != "y":
-            print("Cannot continue without the base model. Exiting.")
-            sys.exit(1)
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "huggingface_hub"])
-            import huggingface_hub
-        except subprocess.CalledProcessError as e:
-            print(f"\nAuto-install failed: {e}")
-            print("Please run manually: pip install huggingface_hub")
-            sys.exit(1)
-
-    model_path.parent.mkdir(parents=True, exist_ok=True)  # Claude - comment: ensure models/ exists before the download writes into it
-
-    try:
-        # Claude - comment: snapshot_download handles partial-download resume
-        # and file integrity on its own - more reliable here than hand-rolling
-        # this with raw requests, and it prints its own progress bars.
-        huggingface_hub.snapshot_download(
-            repo_id=model_info["hf_repo"],
-            local_dir=str(model_path),
-        )
-    except Exception as e:
-        print(f"\nBase model download failed: {e}")
-        print("Check your internet connection and try again - the app cannot run without this model.")
-        sys.exit(1)
-
-    if not _model_is_present(model_path):
-        print("\nDownload finished but the model files look incomplete. Please try again.")
-        sys.exit(1)
-
-    print(f"\nBase model '{model_info['name']}' downloaded successfully.\n")
 
 
 def modelchoice(models):
@@ -257,16 +165,9 @@ def load_pipeline(model, device):
     return pipe
 
 
-def getresponse(pipe, chat_history, prompt):
+def getresponse(pipe, prompt):
     # reveives input of user from userprompts function()
     # this gets response from the localllm
-
-    # Claude - comment: start_chat()/finish_chat() is deprecated in current
-    # OpenVINO GenAI - the pipeline no longer holds conversation memory
-    # internally. We now hold it ourselves in chat_history and pass the
-    # whole thing into generate() every turn, per Intel's current chat-scenario
-    # docs (openvinotoolkit.github.io/openvino.genai/docs/guides/chat-scenario).
-    chat_history.append({"role": "user", "content": prompt})
 
     # dynamic tokens: we don't force a fixed length, the model stops itself on EOS.
     # max_new_tokens here is just a safety ceiling so one bad turn can't run forever.
@@ -281,13 +182,7 @@ def getresponse(pipe, chat_history, prompt):
         return False  # False = keep generating, True would stop early
 
     try:
-        result = pipe.generate(chat_history, gen_config, streamer)
-        # Claude - comment: generate() still streams token-by-token via the
-        # callback above exactly as before - streamer works the same way
-        # regardless of whether the input is a plain string or a ChatHistory.
-        # The difference is we now also get the final text back afterward,
-        # which we need to append as the assistant's turn.
-        chat_history.append({"role": "assistant", "content": result.texts[0]})
+        pipe.generate(prompt, gen_config, streamer)
     except Exception as e:
         print(f"\n[Generation error: {e}]")
     finally:
@@ -301,25 +196,26 @@ def userprompts(pipe):
 
     print("\nChat session started. Type 'exit' or 'quit' to end.\n")
 
-    # Claude - comment: start_chat() is deprecated - we now own the
-    # conversation ourselves via ChatHistory and pass it into every
-    # generate() call instead. No matching finish_chat() call needed below
-    # since there's no pipeline-side chat state left to close out.
-    chat_history = ov_genai.ChatHistory()
+    # start_chat() makes the pipeline remember turns for this session only,
+    # which covers the "remember chat history for the session" requirement
+    pipe.start_chat()
 
-    while True:
-        try:
-            prompt = input("You: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nInterrupted.")
-            break
+    try:
+        while True:
+            try:
+                prompt = input("You: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nInterrupted.")
+                break
 
-        if prompt.lower() in ("exit", "quit"):
-            break
-        if not prompt:
-            continue
+            if prompt.lower() in ("exit", "quit"):
+                break
+            if not prompt:
+                continue
 
-        getresponse(pipe, chat_history, prompt)
+            getresponse(pipe, prompt)
+    finally:
+        pipe.finish_chat()
 
 
 def footer():
@@ -334,14 +230,6 @@ def main():
     devices()
 
     models = localmodels()
-
-    # Claude - comment: default/base model is always the first entry in the
-    # dict (matches the existing "only one uncommented entry" convention) -
-    # forced download happens here, before the model picker is ever shown,
-    # per the beta requirement that first install cannot proceed without it.
-    default_model = next(iter(models.values()))
-    ensure_base_model(default_model)
-
     model, device = modelchoice(models)
 
     pipe = load_pipeline(model, device)
@@ -362,7 +250,7 @@ if __name__ == "__main__":
 # use subprocess to identify whether openvino is installed in the system or not - if not installed then install it via the command -- DONE
 # user to pick up the model -- DONE
 # user to pick between cpu,gpu,npu -- DONE
-# user gives the prompt - the model should remember the chat history for the session only for now. -- DONE, now via a ChatHistory object passed into generate() each turn (Claude - comment: start_chat()/finish_chat() were deprecated by OpenVINO and have been removed, see getresponse()/userprompts())
+# user gives the prompt - the model should remember the chat history for the session only for now. -- DONE via pipe.start_chat()/finish_chat()
 # the model should use dynamic tokens for response as much as it sees fit. -- DONE, model self-stops on EOS, max_new_tokens is just a safety ceiling
 # do something to make sure that the model updates accoringly by the internet.
 # fetches whatever it doeesnt know from the internet - always internet since always is connected that should be the priority - fallback patch the offline works as much as it knows to provide without the internet - dont implement api's yet - for now local models are enough
@@ -370,11 +258,10 @@ if __name__ == "__main__":
 
 
 # == FINAL TOUCH BEFORE BETA ==
-# to add auto update and a default model to talk to. -- Claude - comment: DONE, see ensure_base_model() above
+# to add auto update and a default model to talk to.
 # 1st time application install - the model is actually not added to the .exe so wifi during the locallm install is recommended
 # with the wifi in place first this app will get instaalled say - user selected D drive - then with the intenet the model gets installed - default model only.
 # remainng modle if needed can be download by user by goinng to model name and clicking on add model -
-# Claude - comment: manual "add model" UI for the extra commented-out models above is still a TODO - not part of this pass, beta only needs the one forced base model
 
 # == ALPHA CODE READY ++
 # == MOVING TO BETA - THAT IS BUILD V1 ++
