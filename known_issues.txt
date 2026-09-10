@@ -1,0 +1,7 @@
+the app crashes when run directly by pasting the exe application - outside of the working directory.
+
+
+stuffs on use -
+1. pyside6 - for python gui
+2. cmake - for cpp
+3. qt - for cross platform stuff
